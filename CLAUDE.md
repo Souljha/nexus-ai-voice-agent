@@ -31,6 +31,7 @@ Set the following variables in `.env.local` (local development) and Vercel Dashb
 **Frontend Variables (VITE_ prefix):**
 - `VITE_VAPI_PUBLIC_KEY` - Vapi public key for browser-based voice chat
 - `VITE_VAPI_ASSISTANT_ID` - Vapi assistant ID (currently: `83336d7f-c0ec-4f7d-af9c-431b26be1729`)
+- `VITE_GA_MEASUREMENT_ID` - Google Analytics Measurement ID (format: G-XXXXXXXXXX)
 - `GEMINI_API_KEY` - Gemini API key (exposed as `process.env.API_KEY` and `process.env.GEMINI_API_KEY`)
 
 **Backend Variables (Serverless Functions):**
@@ -43,10 +44,14 @@ Set the following variables in `.env.local` (local development) and Vercel Dashb
 
 The app follows a single-page layout with a component-based architecture:
 
-- `App.tsx` - Root component with main layout structure (Header, Hero, FAQ, Footer, HelpWidget)
+- `App.tsx` - Root component with main layout structure
+- `components/Header.tsx` - Navigation header with links to main Nexus AI Partners site
 - `components/Hero.tsx` - Main hero section that embeds the DemoForm
-- `components/DemoForm.tsx` - Core form handling user input and submission (currently simulates backend call)
-- `components/Header.tsx`, `components/FAQ.tsx`, `components/Footer.tsx`, `components/HelpWidget.tsx` - Supporting UI sections
+- `components/DemoForm.tsx` - Core form handling user input and voice agent demos
+- `components/Testimonials.tsx` - Case studies and social proof section
+- `components/Pricing.tsx` - 3-tier pricing model (Starter $149, Professional $349, Enterprise $999)
+- `components/FAQ.tsx` - Frequently asked questions
+- `components/Footer.tsx` - Footer with links and information
 
 ### Form Handling and Voice Integration
 
@@ -129,10 +134,38 @@ The project uses `@/*` as an alias for the project root (configured in both `vit
 
 **Future Enhancement:** Consider adding phone number validation using libphonenumber-js
 
+## Analytics & Tracking
+
+### Google Analytics Integration
+
+The app includes Google Analytics 4 (GA4) tracking:
+- Configured in `index.html` with environment variable replacement
+- Tracking utilities in `utils/analytics.ts`
+- Automatically tracks: page views, lead submissions, call requests, browser demo starts
+
+**Events Tracked:**
+- `generate_lead` - When user submits contact information
+- `request_call` - When user requests a phone call
+- `start_browser_demo` - When user starts browser voice chat
+- `view_pricing` - When user views pricing tiers
+
+**Setup:**
+1. Create a Google Analytics 4 property at https://analytics.google.com
+2. Get your Measurement ID (format: G-XXXXXXXXXX)
+3. Add `VITE_GA_MEASUREMENT_ID` to Vercel environment variables
+4. Redeploy - tracking will work automatically
+
+### Lead Tracking
+
+All form submissions are tracked via:
+- Google Analytics events (for analytics dashboards)
+- Can be extended to integrate with CRMs (HubSpot, Salesforce, etc.)
+
 ## Technology Stack
 
 - React 19.2.0 with TypeScript
 - Vite 6.2.0 for build tooling
 - Tailwind CSS for styling (inline utility classes)
 - Vapi Web SDK (@vapi-ai/web) for voice agent integration
+- Google Analytics 4 for tracking and analytics
 - Gemini API integration (configured but not yet actively used in the codebase)

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FormData } from '../types';
 import { useVapi } from '../hooks/useVapi';
+import { trackLead, trackCallRequest, trackBrowserDemo } from '../utils/analytics';
 
 const InputField: React.FC<{ id: string; name: string; type: string; placeholder: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; required?: boolean }> = (props) => (
   <input
@@ -41,6 +42,16 @@ const DemoForm: React.FC = () => {
     setMessage('');
 
     try {
+      // Track lead and call request
+      trackLead({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phoneNumber: formData.contactNumber,
+        source: 'phone_call',
+      });
+      trackCallRequest(formData.contactNumber);
+
       // Call the Vercel serverless function to initiate the phone call
       const response = await fetch('/api/initiate-call', {
         method: 'POST',
@@ -81,6 +92,8 @@ const DemoForm: React.FC = () => {
     if (isConnected) {
       endCall();
     } else {
+      // Track browser demo start
+      trackBrowserDemo();
       startCall();
     }
   };
