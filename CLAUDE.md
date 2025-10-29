@@ -26,10 +26,15 @@ npm preview
 
 ## Environment Configuration
 
-Set the following variables in `.env.local`:
-- `GEMINI_API_KEY` - Gemini API key (exposed as `process.env.API_KEY` and `process.env.GEMINI_API_KEY`)
+Set the following variables in `.env.local` (local development) and Vercel Dashboard (production):
+
+**Frontend Variables (VITE_ prefix):**
 - `VITE_VAPI_PUBLIC_KEY` - Vapi public key for browser-based voice chat
 - `VITE_VAPI_ASSISTANT_ID` - Vapi assistant ID (currently: `83336d7f-c0ec-4f7d-af9c-431b26be1729`)
+- `GEMINI_API_KEY` - Gemini API key (exposed as `process.env.API_KEY` and `process.env.GEMINI_API_KEY`)
+
+**Backend Variables (Serverless Functions):**
+- `VAPI_PRIVATE_KEY` - Vapi private key for initiating outbound calls (server-side only, DO NOT expose to frontend)
 
 ## Architecture
 
@@ -53,11 +58,12 @@ The DemoForm component (`components/DemoForm.tsx`) manages two interaction modes
 - Visual feedback: call status card, speaking indicator, volume level meter
 - No backend required (uses Vapi public key)
 
-**Phone Call Feature (Requires Backend):**
+**Phone Call Feature (Active):**
 - Form collects: firstName, lastName, email, contactNumber, message (optional)
-- Currently disabled with message to use browser feature instead
-- Would require backend API to securely use Vapi private key with Twilio integration
+- Calls `/api/initiate-call` serverless function to trigger outbound call via Vapi + Twilio
+- Backend API securely uses Vapi private key (not exposed to frontend)
 - Status management: idle → loading → success/error → idle (5s delay)
+- User receives phone call from AI agent on their device
 
 ### Type System
 
@@ -89,17 +95,38 @@ The project uses `@/*` as an alias for the project root (configured in both `vit
 - `volume-level` - Updates visual volume meter
 - `error` - Displays error messages to user
 
-### Backend Integration for Phone Calls (Future)
+### Backend Integration for Phone Calls (Implemented)
 
-To implement the "Call My Phone" feature:
-- Create a backend API endpoint (Express, Next.js API route, etc.)
-- Store Vapi private key securely in backend environment variables
-- API should:
-  1. Receive user's phone number and details
-  2. Call Vapi API to initiate outbound call using Twilio integration
-  3. Return success/error status
-- Consider adding phone number validation (e.g., libphonenumber-js)
-- Update `DemoForm.tsx:38-51` to call this backend endpoint
+**Vercel Serverless Function:** `api/initiate-call.ts`
+- Uses Vercel serverless architecture (no separate server needed)
+- Receives phone number and user details from frontend
+- Makes authenticated request to Vapi API to initiate outbound call
+- Vapi private key stored securely in Vercel environment variables (not exposed to frontend)
+- Returns success/error response to frontend
+
+**API Endpoint:** `POST /api/initiate-call`
+
+**Request Body:**
+```json
+{
+  "phoneNumber": "+15551234567",
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john@example.com",
+  "message": "Optional message"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Call initiated successfully",
+  "callId": "call_xyz123"
+}
+```
+
+**Future Enhancement:** Consider adding phone number validation using libphonenumber-js
 
 ## Technology Stack
 

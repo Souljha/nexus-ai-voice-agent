@@ -40,14 +40,41 @@ const DemoForm: React.FC = () => {
     setStatus('loading');
     setMessage('');
 
-    // Note: Phone call feature requires backend implementation
-    // This would need a server-side API to securely use Vapi private key
-    setStatus('error');
-    setMessage('Phone call feature requires backend setup. Please use "Try In Browser" instead.');
-    setTimeout(() => {
-      setStatus('idle');
-      setMessage('');
-    }, 5000);
+    try {
+      // Call the Vercel serverless function to initiate the phone call
+      const response = await fetch('/api/initiate-call', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumber: formData.contactNumber,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          message: formData.message,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to initiate call');
+      }
+
+      setStatus('success');
+      setMessage('Success! You should receive a call from our AI agent shortly.');
+      setFormData({ firstName: '', lastName: '', email: '', contactNumber: '', message: '' });
+    } catch (error: any) {
+      console.error('Error initiating call:', error);
+      setStatus('error');
+      setMessage(error.message || 'Something went wrong. Please try again later.');
+    } finally {
+      setTimeout(() => {
+        setStatus('idle');
+        setMessage('');
+      }, 5000);
+    }
   };
 
   const handleTryInBrowser = () => {
