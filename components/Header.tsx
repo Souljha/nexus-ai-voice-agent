@@ -19,10 +19,9 @@ const Header: React.FC = () => {
 
   const navLinks = [
     { href: '#', text: 'Home' },
-    { href: '#', text: 'About Us' },
-    { href: '#', text: 'Web Development' },
-    { href: '#', text: 'Animation' },
-    { href: '#', text: 'Contact Us' },
+    { href: 'https://nexusaipartners.com/about-us/', text: 'About Us' },
+    { href: 'https://nexusaipartners.com/ourservices/', text: 'Web Development' },
+    { href: 'https://nexusaipartners.com/contact/', text: 'Contact Us' },
   ];
 
   return (
