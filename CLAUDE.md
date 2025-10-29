@@ -35,7 +35,7 @@ Set the following variables in `.env.local` (local development) and Vercel Dashb
 
 **Backend Variables (Serverless Functions):**
 - `VAPI_PRIVATE_KEY` - Vapi private key for initiating outbound calls (server-side only, DO NOT expose to frontend)
-- `TWILIO_PHONE_NUMBER` - Your Twilio phone number to call FROM (e.g., `+27872502639`)
+- `VAPI_PHONE_NUMBER_ID` - Vapi Phone Number ID from your Vapi dashboard (e.g., `0e0a14cf-c747-44df-add1-3d6a3c3e409c`)
 
 ## Architecture
 

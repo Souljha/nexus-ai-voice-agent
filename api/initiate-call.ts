@@ -28,7 +28,7 @@ export default async function handler(
     // Get Vapi credentials from environment
     const vapiPrivateKey = process.env.VAPI_PRIVATE_KEY;
     const vapiAssistantId = process.env.VITE_VAPI_ASSISTANT_ID;
-    const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+    const vapiPhoneNumberId = process.env.VAPI_PHONE_NUMBER_ID;
 
     if (!vapiPrivateKey) {
       console.error('VAPI_PRIVATE_KEY not configured');
@@ -40,8 +40,8 @@ export default async function handler(
       return res.status(500).json({ error: 'Server configuration error' });
     }
 
-    if (!twilioPhoneNumber) {
-      console.error('TWILIO_PHONE_NUMBER not configured');
+    if (!vapiPhoneNumberId) {
+      console.error('VAPI_PHONE_NUMBER_ID not configured');
       return res.status(500).json({ error: 'Server configuration error' });
     }
 
@@ -62,9 +62,7 @@ export default async function handler(
       },
       body: JSON.stringify({
         assistantId: vapiAssistantId,
-        phoneNumber: {
-          twilioPhoneNumber: twilioPhoneNumber, // The Twilio number to call FROM
-        },
+        phoneNumberId: vapiPhoneNumberId, // Vapi Phone Number ID (configured in Vapi dashboard)
         customer: {
           number: phoneNumber, // The number to call TO (user's phone number)
         },
