@@ -62,7 +62,9 @@ export default async function handler(
       },
       body: JSON.stringify({
         assistantId: vapiAssistantId,
-        phoneNumber: twilioPhoneNumber, // The number to call FROM (your Twilio number)
+        phoneNumber: {
+          twilioPhoneNumber: twilioPhoneNumber, // The Twilio number to call FROM
+        },
         customer: {
           number: phoneNumber, // The number to call TO (user's phone number)
         },
