@@ -3,7 +3,6 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import FAQ from './components/FAQ';
 import Footer from './components/Footer';
-import HelpWidget from './components/HelpWidget';
 
 const App: React.FC = () => {
   return (
@@ -14,7 +13,6 @@ const App: React.FC = () => {
         <FAQ />
       </main>
       <Footer />
-      <HelpWidget />
     </div>
   );
 };
