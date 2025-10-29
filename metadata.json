@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Nexus AI Voice Agent Demo",
+  "description": "A landing page for users to test a live demo of the Nexus AI Voice Agent service. Users can enter their phone number to receive a call from the AI agent.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
