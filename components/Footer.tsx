@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (
@@ -9,8 +10,8 @@ const Footer: React.FC = () => {
             &copy; {new Date().getFullYear()} Nexus AI Partners. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors">Privacy Policy</a>
-            <a href="#" className="text-gray-400 hover:text-blue-400 transition-colors">Terms of Service</a>
+            <Link to="/refund-policy" className="text-gray-400 hover:text-blue-400 transition-colors">Refund Policy</Link>
+            <Link to="/terms" className="text-gray-400 hover:text-blue-400 transition-colors">Terms of Service</Link>
           </div>
         </div>
       </div>
