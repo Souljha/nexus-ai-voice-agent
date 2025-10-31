@@ -14,6 +14,9 @@ const Hero: React.FC = () => {
   return (
     <section className="py-16 md:py-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <p className="text-xl md:text-2xl text-gray-300 font-medium mb-6">
+          We turn missed customer calls into automated bookings, 24/7, using AI voice + smart websites.
+        </p>
         <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight mb-4">
           Try Our AI Voice Agent — <span className="text-blue-400">Live Demo</span>
         </h1>
