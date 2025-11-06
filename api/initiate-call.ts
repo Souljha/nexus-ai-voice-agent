@@ -1,4 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import {
+  checkRateLimit,
+  validatePhoneNumber,
+  isPhoneBlacklisted,
+  addToBlacklist
+} from './rate-limiter';
+import { verifyRecaptcha } from './verify-recaptcha';
 
 interface CallRequestBody {
   phoneNumber: string;
@@ -6,6 +13,17 @@ interface CallRequestBody {
   lastName?: string;
   email?: string;
   message?: string;
+  honeypot?: string; // Bot detection field
+  captchaToken?: string; // reCAPTCHA token
+}
+
+// Get client IP address
+function getClientIp(req: VercelRequest): string {
+  return (
+    (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+    (req.headers['x-real-ip'] as string) ||
+    'unknown'
+  );
 }
 
 export default async function handler(
@@ -18,11 +36,79 @@ export default async function handler(
   }
 
   try {
-    const { phoneNumber, firstName, lastName, email, message } = req.body as CallRequestBody;
+    const { phoneNumber, firstName, lastName, email, message, honeypot, captchaToken } = req.body as CallRequestBody;
 
-    // Validate phone number
+    // Honeypot check - if filled, it's a bot
+    if (honeypot) {
+      console.warn('Bot detected via honeypot field');
+      // Return success to avoid revealing the honeypot
+      return res.status(200).json({
+        success: true,
+        message: 'Call initiated successfully',
+      });
+    }
+
+    // Verify reCAPTCHA token
+    const recaptchaResult = await verifyRecaptcha(captchaToken || '');
+    if (!recaptchaResult.success) {
+      console.warn('reCAPTCHA verification failed:', recaptchaResult.error);
+      return res.status(403).json({
+        error: recaptchaResult.error || 'Security verification failed. Please try again.',
+      });
+    }
+
+    // Log reCAPTCHA score for monitoring
+    if (recaptchaResult.score !== undefined) {
+      console.log(`reCAPTCHA score: ${recaptchaResult.score}`);
+    }
+
+    // Validate phone number presence
     if (!phoneNumber) {
       return res.status(400).json({ error: 'Phone number is required' });
+    }
+
+    // Validate phone number format and pattern
+    const phoneValidation = validatePhoneNumber(phoneNumber);
+    if (!phoneValidation.valid) {
+      return res.status(400).json({ error: phoneValidation.error });
+    }
+
+    // Check if phone number is blacklisted
+    if (isPhoneBlacklisted(phoneNumber)) {
+      console.warn(`Blocked blacklisted number: ${phoneNumber}`);
+      return res.status(403).json({
+        error: 'This phone number is not allowed. Please contact support if you believe this is an error.'
+      });
+    }
+
+    // Get client IP for rate limiting
+    const clientIp = getClientIp(req);
+
+    // Rate limit by IP address
+    const ipRateLimit = checkRateLimit(`ip:${clientIp}`, 3);
+    if (!ipRateLimit.allowed) {
+      console.warn(`Rate limit exceeded for IP: ${clientIp}`);
+      return res.status(429).json({
+        error: ipRateLimit.reason,
+        retryAfter: ipRateLimit.retryAfter,
+      });
+    }
+
+    // Rate limit by phone number
+    const phoneRateLimit = checkRateLimit(`phone:${phoneNumber}`, 2);
+    if (!phoneRateLimit.allowed) {
+      console.warn(`Rate limit exceeded for phone: ${phoneNumber}`);
+
+      // Auto-blacklist if severely abused (10+ attempts)
+      const entry = phoneRateLimit as any;
+      if (entry.count && entry.count > 10) {
+        addToBlacklist(phoneNumber);
+      }
+
+      return res.status(429).json({
+        error: ipRateLimit.reason || 'Too many call requests for this number. Please try again later.',
+        retryAfter: phoneRateLimit.retryAfter,
+      });
     }
 
     // Get Vapi credentials from environment
@@ -67,6 +153,8 @@ export default async function handler(
           number: phoneNumber, // The number to call TO (user's phone number)
         },
         metadata: callMetadata,
+        // Add maximum call duration (3 minutes = 180 seconds) to prevent abuse
+        maxDurationSeconds: 180,
       }),
     });
 

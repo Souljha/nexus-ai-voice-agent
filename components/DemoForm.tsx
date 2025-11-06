@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FormData } from '../types';
 import { useVapi } from '../hooks/useVapi';
 import { trackLead, trackCallRequest, trackBrowserDemo } from '../utils/analytics';
+import { executeRecaptcha } from '../utils/recaptcha';
 
 const InputField: React.FC<{ id: string; name: string; type: string; placeholder: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; required?: boolean }> = (props) => (
   <input
@@ -25,6 +26,7 @@ const DemoForm: React.FC = () => {
     contactNumber: '',
     message: ''
   });
+  const [honeypot, setHoneypot] = useState(''); // Bot detection field
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
@@ -42,6 +44,9 @@ const DemoForm: React.FC = () => {
     setMessage('');
 
     try {
+      // Execute reCAPTCHA to get token
+      const captchaToken = await executeRecaptcha('initiate_call');
+
       // Track lead and call request
       trackLead({
         firstName: formData.firstName,
@@ -64,6 +69,8 @@ const DemoForm: React.FC = () => {
           lastName: formData.lastName,
           email: formData.email,
           message: formData.message,
+          honeypot: honeypot, // Include honeypot for bot detection
+          captchaToken: captchaToken, // Include reCAPTCHA token
         }),
       });
 
@@ -76,6 +83,7 @@ const DemoForm: React.FC = () => {
       setStatus('success');
       setMessage('Success! You should receive a call from our AI agent shortly.');
       setFormData({ firstName: '', lastName: '', email: '', contactNumber: '', message: '' });
+      setHoneypot(''); // Reset honeypot
     } catch (error: any) {
       console.error('Error initiating call:', error);
       setStatus('error');
@@ -155,6 +163,20 @@ const DemoForm: React.FC = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Honeypot field - hidden from users but visible to bots */}
+        <div className="hidden" aria-hidden="true">
+          <label htmlFor="website">Website (leave blank)</label>
+          <input
+            type="text"
+            id="website"
+            name="website"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+          />
+        </div>
+
         <div className="flex flex-col md:flex-row gap-4">
           <div className="w-full">
             <label htmlFor="firstName" className="sr-only">First Name</label>

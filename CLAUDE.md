@@ -33,12 +33,14 @@ Set the following variables in `.env.local` (local development) and Vercel Dashb
 - `VITE_VAPI_ASSISTANT_ID` - Vapi assistant ID (currently: `83336d7f-c0ec-4f7d-af9c-431b26be1729`)
 - `VITE_GA_MEASUREMENT_ID` - Google Analytics Measurement ID (format: G-XXXXXXXXXX)
 - `VITE_PAYSTACK_PUBLIC_KEY` - Paystack public key for payment processing (starts with `pk_test_` or `pk_live_`)
+- `VITE_RECAPTCHA_SITE_KEY` - Google reCAPTCHA v3 site key for bot detection (get from https://www.google.com/recaptcha/admin)
 - `GEMINI_API_KEY` - Gemini API key (exposed as `process.env.API_KEY` and `process.env.GEMINI_API_KEY`)
 
 **Backend Variables (Serverless Functions):**
 - `VAPI_PRIVATE_KEY` - Vapi private key for initiating outbound calls (server-side only, DO NOT expose to frontend)
 - `VAPI_PHONE_NUMBER_ID` - Vapi Phone Number ID from your Vapi dashboard (e.g., `0e0a14cf-c747-44df-add1-3d6a3c3e409c`)
 - `PAYSTACK_SECRET_KEY` - Paystack secret key for payment verification (starts with `sk_test_` or `sk_live_`, server-side only)
+- `RECAPTCHA_SECRET_KEY` - Google reCAPTCHA v3 secret key for server-side verification (server-side only)
 
 ## Architecture
 
@@ -134,7 +136,55 @@ The project uses `@/*` as an alias for the project root (configured in both `vit
 }
 ```
 
-**Future Enhancement:** Consider adding phone number validation using libphonenumber-js
+## Security & Anti-Abuse Measures
+
+The application implements comprehensive security measures to prevent bot abuse and protect Vapi credits. For detailed information, see `SECURITY.md`.
+
+### Security Layers
+
+1. **Rate Limiting** (`api/rate-limiter.ts`)
+   - Limits: 3 calls per IP per 15 min, 2 calls per phone number per 15 min
+   - Auto-blocks severe violators for 1 hour
+   - Auto-blacklists numbers with 10+ abuse attempts
+
+2. **Phone Number Validation**
+   - Validates E.164 international format
+   - Blocks suspicious patterns (all same digits, sequential numbers)
+   - Manual and auto-blacklist support
+
+3. **Honeypot Field**
+   - Hidden form field (`website`) catches basic bots
+   - Returns fake success to avoid detection
+
+4. **Google reCAPTCHA v3** (`utils/recaptcha.ts`, `api/verify-recaptcha.ts`)
+   - Invisible bot detection (no checkboxes)
+   - Score-based validation (threshold: 0.5)
+   - Requires `VITE_RECAPTCHA_SITE_KEY` and `RECAPTCHA_SECRET_KEY`
+
+5. **Call Duration Limits**
+   - Maximum 3-minute calls (180 seconds)
+   - Prevents 10-minute abuse that was draining credits (~$1.50/call)
+   - Saves ~70% on call costs
+
+6. **IP-Based Blocking**
+   - Tracks requests by IP address
+   - Prevents distributed attacks
+
+### Setup Requirements
+
+1. Get reCAPTCHA v3 keys from https://www.google.com/recaptcha/admin
+2. Add to Vercel environment variables:
+   - `VITE_RECAPTCHA_SITE_KEY` (frontend)
+   - `RECAPTCHA_SECRET_KEY` (backend)
+3. Configure Vapi spending limits and alerts
+4. Monitor call logs for suspicious patterns
+
+### Monitoring
+
+- All security events logged to console
+- Review Vapi dashboard: https://dashboard.vapi.ai/calls
+- Check Vercel logs for abuse patterns
+- Set up credit alerts in Vapi dashboard
 
 ## Analytics & Tracking
 
