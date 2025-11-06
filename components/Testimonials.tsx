@@ -56,10 +56,10 @@ const Testimonials: React.FC = () => {
   // You can update these with your actual case studies
   const testimonials: TestimonialProps[] = [
     {
-      company: "Elite Dental Care",
-      industry: "Healthcare / Dental Practice",
+      company: "Pharen's Agency",
+      industry: "Med Spa Marketing",
       quote: "The AI voice agent handles our appointment bookings 24/7. We've reduced missed calls by 85% and our front desk staff can now focus on in-person patients. The ROI was immediate.",
-      author: "Dr. Sarah Mitchell",
+      author: "Pharen Carlton",
       role: "Practice Owner",
       results: [
         { metric: "Calls Answered", value: "85%" },
@@ -69,11 +69,11 @@ const Testimonials: React.FC = () => {
       ]
     },
     {
-      company: "Premier Real Estate Group",
-      industry: "Real Estate",
+      company: "My Ride",
+      industry: "E-Hailing Service",
       quote: "Our AI agent qualifies leads instantly and schedules property viewings automatically. It's like having a full-time receptionist who never sleeps. Game changer for our business.",
-      author: "Marcus Johnson",
-      role: "Managing Broker",
+      author: "Elton Adams",
+      role: "Marketing Manager",
       results: [
         { metric: "Lead Response", value: "Instant" },
         { metric: "Qualified Leads", value: "+60%" },
