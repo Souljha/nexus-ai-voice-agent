@@ -21,19 +21,19 @@ The system implements multiple layers of security to prevent bot abuse, spam, an
 - **Location**: `api/rate-limiter.ts`
 - **Type**: In-memory rate limiting (for production, consider Redis or Vercel KV)
 
-### Limits
-- **Per IP Address**: Maximum 3 calls per 15-minute window
-- **Per Phone Number**: Maximum 2 calls per 15-minute window
-- **Block Duration**: 1 hour for severe violations (exceeding limits by 2x)
+### Limits (Enhanced Security - Stricter Thresholds)
+- **Per IP Address**: Maximum 2 calls per 15-minute window (reduced from 3)
+- **Per Phone Number**: Maximum 1 call per 15-minute window (reduced from 2)
+- **Block Duration**: 2 hours for severe violations (increased from 1 hour)
 
-### Auto-Blacklist
-- Phone numbers that exceed 10+ call attempts are automatically blacklisted
-- Prevents persistent bot attacks
+### Auto-Blacklist (Faster Blocking)
+- Phone numbers that exceed 5+ call attempts are automatically blacklisted (reduced from 10+)
+- Prevents persistent bot attacks more aggressively
 
 ### How It Works
 ```typescript
 // Example rate limit check
-const ipRateLimit = checkRateLimit(`ip:${clientIp}`, 3);
+const ipRateLimit = checkRateLimit(`ip:${clientIp}`, 2);
 if (!ipRateLimit.allowed) {
   return res.status(429).json({
     error: 'Rate limit exceeded',
@@ -94,10 +94,10 @@ if (honeypot) {
 - **Score-Based**: Returns a score (0.0-1.0) indicating likelihood of being human
 - **Action Tracking**: Tracks specific actions (`initiate_call`)
 
-### Configuration
+### Configuration (Enhanced Security)
 - **Frontend**: `VITE_RECAPTCHA_SITE_KEY` (public key)
 - **Backend**: `RECAPTCHA_SECRET_KEY` (private key for verification)
-- **Threshold**: 0.5 (requests with score below this are rejected)
+- **Threshold**: 0.6 (increased from 0.5 for stricter bot detection)
 
 ### Setup Instructions
 

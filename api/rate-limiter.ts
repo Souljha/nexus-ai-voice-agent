@@ -10,14 +10,14 @@ const rateLimitStore = new Map<string, RateLimitEntry>();
 
 // Configuration
 const RATE_LIMIT_CONFIG = {
-  // Max calls per time window per IP
-  maxCallsPerIP: 3,
-  // Max calls per time window per phone number
-  maxCallsPerPhone: 2,
+  // Max calls per time window per IP (reduced from 3 to 2 for stricter security)
+  maxCallsPerIP: 2,
+  // Max calls per time window per phone number (reduced from 2 to 1 for stricter security)
+  maxCallsPerPhone: 1,
   // Time window in milliseconds (15 minutes)
   windowMs: 15 * 60 * 1000,
-  // Block duration for repeated violations (1 hour)
-  blockDurationMs: 60 * 60 * 1000,
+  // Block duration for repeated violations (increased from 1 hour to 2 hours for stricter security)
+  blockDurationMs: 2 * 60 * 60 * 1000,
   // Cleanup old entries every 30 minutes
   cleanupIntervalMs: 30 * 60 * 1000,
 };

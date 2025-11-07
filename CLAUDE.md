@@ -140,12 +140,12 @@ The project uses `@/*` as an alias for the project root (configured in both `vit
 
 The application implements comprehensive security measures to prevent bot abuse and protect Vapi credits. For detailed information, see `SECURITY.md`.
 
-### Security Layers
+### Security Layers (Enhanced - Stricter Thresholds)
 
 1. **Rate Limiting** (`api/rate-limiter.ts`)
-   - Limits: 3 calls per IP per 15 min, 2 calls per phone number per 15 min
-   - Auto-blocks severe violators for 1 hour
-   - Auto-blacklists numbers with 10+ abuse attempts
+   - Limits: 2 calls per IP per 15 min, 1 call per phone number per 15 min (stricter)
+   - Auto-blocks severe violators for 2 hours (increased from 1 hour)
+   - Auto-blacklists numbers with 5+ abuse attempts (reduced from 10+ for faster blocking)
 
 2. **Phone Number Validation**
    - Validates E.164 international format
@@ -158,7 +158,7 @@ The application implements comprehensive security measures to prevent bot abuse 
 
 4. **Google reCAPTCHA v3** (`utils/recaptcha.ts`, `api/verify-recaptcha.ts`)
    - Invisible bot detection (no checkboxes)
-   - Score-based validation (threshold: 0.5)
+   - Score-based validation (threshold: 0.6, increased from 0.5 for stricter detection)
    - Requires `VITE_RECAPTCHA_SITE_KEY` and `RECAPTCHA_SECRET_KEY`
 
 5. **Call Duration Limits**

@@ -54,7 +54,8 @@ export async function verifyRecaptcha(
 
     // Check the score (0.0 - 1.0, where 1.0 is very likely a good interaction)
     // reCAPTCHA v3 returns a score instead of a pass/fail
-    const threshold = 0.5; // Adjust this threshold based on your needs
+    // Increased from 0.5 to 0.6 for stricter bot detection
+    const threshold = 0.6; // Adjust this threshold based on your needs
     if (data.score < threshold) {
       console.warn(`Low reCAPTCHA score: ${data.score} for action: ${data.action}`);
       return {
