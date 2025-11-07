@@ -21,10 +21,10 @@ The system implements multiple layers of security to prevent bot abuse, spam, an
 - **Location**: `api/rate-limiter.ts`
 - **Type**: In-memory rate limiting (for production, consider Redis or Vercel KV)
 
-### Limits (Enhanced Security - Stricter Thresholds)
-- **Per IP Address**: Maximum 2 calls per 15-minute window (reduced from 3)
-- **Per Phone Number**: Maximum 1 call per 15-minute window (reduced from 2)
-- **Block Duration**: 2 hours for severe violations (increased from 1 hour)
+### Limits (Enhanced Security - Ultra-Strict Thresholds)
+- **Per IP Address**: Maximum 2 calls per 5-minute window (ultra-strict for cost control)
+- **Per Phone Number**: Maximum 1 call per 5-minute window (ultra-strict for cost control)
+- **Time Window**: 5 minutes (3x stricter than original 15 minutes)
 
 ### Auto-Blacklist (Faster Blocking)
 - Phone numbers that exceed 5+ call attempts are automatically blacklisted (reduced from 10+)

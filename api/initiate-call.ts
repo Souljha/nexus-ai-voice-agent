@@ -82,19 +82,19 @@ export default async function handler(
                      (req.headers['x-real-ip'] as string) ||
                      'unknown';
 
-    // Rate limiting: 2 calls per phone per 15 minutes
-    if (!checkSimpleRateLimit(`phone:${phoneNumber}`, 1, 15 * 60 * 1000)) {
+    // Rate limiting: 1 call per phone per 5 minutes (stricter)
+    if (!checkSimpleRateLimit(`phone:${phoneNumber}`, 1, 5 * 60 * 1000)) {
       console.warn(`Rate limit exceeded for phone: ${phoneNumber}`);
       return res.status(429).json({
-        error: 'Too many call requests. Please wait 15 minutes and try again.'
+        error: 'Too many call requests. Please wait 5 minutes and try again.'
       });
     }
 
-    // Rate limiting: 3 calls per IP per 15 minutes
-    if (!checkSimpleRateLimit(`ip:${clientIp}`, 2, 15 * 60 * 1000)) {
+    // Rate limiting: 2 calls per IP per 5 minutes (stricter)
+    if (!checkSimpleRateLimit(`ip:${clientIp}`, 2, 5 * 60 * 1000)) {
       console.warn(`Rate limit exceeded for IP: ${clientIp}`);
       return res.status(429).json({
-        error: 'Too many call requests from your location. Please wait and try again.'
+        error: 'Too many call requests from your location. Please wait 5 minutes and try again.'
       });
     }
 

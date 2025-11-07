@@ -142,10 +142,10 @@ The application implements comprehensive security measures to prevent bot abuse 
 
 ### Security Layers (Enhanced - Stricter Thresholds)
 
-1. **Rate Limiting** (`api/rate-limiter.ts`)
-   - Limits: 2 calls per IP per 15 min, 1 call per phone number per 15 min (stricter)
-   - Auto-blocks severe violators for 2 hours (increased from 1 hour)
-   - Auto-blacklists numbers with 5+ abuse attempts (reduced from 10+ for faster blocking)
+1. **Rate Limiting** (`api/initiate-call.ts`)
+   - Limits: 2 calls per IP per 5 min, 1 call per phone number per 5 min (ultra-strict)
+   - 5-minute time window (3x stricter than original 15 minutes)
+   - Serverless-safe implementation with in-memory Map
 
 2. **Phone Number Validation**
    - Validates E.164 international format
