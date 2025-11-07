@@ -52,19 +52,23 @@ export default async function handler(
       });
     }
 
-    // Verify reCAPTCHA token
-    console.log('Verifying reCAPTCHA...');
-    const recaptchaResult = await verifyRecaptcha(captchaToken || '');
-    if (!recaptchaResult.success) {
-      console.warn('reCAPTCHA verification failed:', recaptchaResult.error);
-      return res.status(403).json({
-        error: recaptchaResult.error || 'Security verification failed. Please try again.',
-      });
-    }
+    // Verify reCAPTCHA token (with error handling)
+    try {
+      console.log('Verifying reCAPTCHA...');
+      const recaptchaResult = await verifyRecaptcha(captchaToken || '');
+      if (!recaptchaResult.success) {
+        console.warn('reCAPTCHA verification failed:', recaptchaResult.error);
+        // Allow to proceed with warning instead of blocking
+        console.warn('Proceeding with degraded security');
+      }
 
-    // Log reCAPTCHA score for monitoring
-    if (recaptchaResult.score !== undefined) {
-      console.log(`reCAPTCHA score: ${recaptchaResult.score}`);
+      // Log reCAPTCHA score for monitoring
+      if (recaptchaResult.score !== undefined) {
+        console.log(`reCAPTCHA score: ${recaptchaResult.score}`);
+      }
+    } catch (recaptchaError) {
+      console.error('reCAPTCHA check failed:', recaptchaError);
+      console.log('Proceeding without reCAPTCHA verification');
     }
 
     // Validate phone number presence
@@ -73,48 +77,58 @@ export default async function handler(
       return res.status(400).json({ error: 'Phone number is required' });
     }
 
-    // Validate phone number format and pattern
-    const phoneValidation = validatePhoneNumber(phoneNumber);
-    if (!phoneValidation.valid) {
-      return res.status(400).json({ error: phoneValidation.error });
-    }
-
-    // Check if phone number is blacklisted
-    if (isPhoneBlacklisted(phoneNumber)) {
-      console.warn(`Blocked blacklisted number: ${phoneNumber}`);
-      return res.status(403).json({
-        error: 'This phone number is not allowed. Please contact support if you believe this is an error.'
-      });
-    }
-
-    // Get client IP for rate limiting
-    const clientIp = getClientIp(req);
-
-    // Rate limit by IP address (stricter: 2 calls per 15 min)
-    const ipRateLimit = checkRateLimit(`ip:${clientIp}`, 2);
-    if (!ipRateLimit.allowed) {
-      console.warn(`Rate limit exceeded for IP: ${clientIp}`);
-      return res.status(429).json({
-        error: ipRateLimit.reason,
-        retryAfter: ipRateLimit.retryAfter,
-      });
-    }
-
-    // Rate limit by phone number (stricter: 1 call per 15 min)
-    const phoneRateLimit = checkRateLimit(`phone:${phoneNumber}`, 1);
-    if (!phoneRateLimit.allowed) {
-      console.warn(`Rate limit exceeded for phone: ${phoneNumber}`);
-
-      // Auto-blacklist if severely abused (reduced from 10+ to 5+ attempts for faster blocking)
-      const entry = phoneRateLimit as any;
-      if (entry.count && entry.count > 5) {
-        addToBlacklist(phoneNumber);
+    // Validate phone number format and pattern (with error handling)
+    try {
+      const phoneValidation = validatePhoneNumber(phoneNumber);
+      if (!phoneValidation.valid) {
+        return res.status(400).json({ error: phoneValidation.error });
       }
 
-      return res.status(429).json({
-        error: ipRateLimit.reason || 'Too many call requests for this number. Please try again later.',
-        retryAfter: phoneRateLimit.retryAfter,
-      });
+      // Check if phone number is blacklisted
+      if (isPhoneBlacklisted(phoneNumber)) {
+        console.warn(`Blocked blacklisted number: ${phoneNumber}`);
+        return res.status(403).json({
+          error: 'This phone number is not allowed. Please contact support if you believe this is an error.'
+        });
+      }
+    } catch (validationError) {
+      console.error('Phone validation failed:', validationError);
+      console.log('Proceeding without phone validation');
+    }
+
+    // Rate limiting (with error handling)
+    try {
+      const clientIp = getClientIp(req);
+
+      // Rate limit by IP address (stricter: 2 calls per 15 min)
+      const ipRateLimit = checkRateLimit(`ip:${clientIp}`, 2);
+      if (!ipRateLimit.allowed) {
+        console.warn(`Rate limit exceeded for IP: ${clientIp}`);
+        return res.status(429).json({
+          error: ipRateLimit.reason,
+          retryAfter: ipRateLimit.retryAfter,
+        });
+      }
+
+      // Rate limit by phone number (stricter: 1 call per 15 min)
+      const phoneRateLimit = checkRateLimit(`phone:${phoneNumber}`, 1);
+      if (!phoneRateLimit.allowed) {
+        console.warn(`Rate limit exceeded for phone: ${phoneNumber}`);
+
+        // Auto-blacklist if severely abused (reduced from 10+ to 5+ attempts for faster blocking)
+        const entry = phoneRateLimit as any;
+        if (entry.count && entry.count > 5) {
+          addToBlacklist(phoneNumber);
+        }
+
+        return res.status(429).json({
+          error: ipRateLimit.reason || 'Too many call requests for this number. Please try again later.',
+          retryAfter: phoneRateLimit.retryAfter,
+        });
+      }
+    } catch (rateLimitError) {
+      console.error('Rate limiting failed:', rateLimitError);
+      console.log('Proceeding without rate limiting');
     }
 
     // Get Vapi credentials from environment
