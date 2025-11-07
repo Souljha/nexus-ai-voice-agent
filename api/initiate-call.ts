@@ -30,12 +30,16 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
+  // Set JSON content type
+  res.setHeader('Content-Type', 'application/json');
+
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
+    console.log('Initiating call request...');
     const { phoneNumber, firstName, lastName, email, message, honeypot, captchaToken } = req.body as CallRequestBody;
 
     // Honeypot check - if filled, it's a bot
@@ -49,6 +53,7 @@ export default async function handler(
     }
 
     // Verify reCAPTCHA token
+    console.log('Verifying reCAPTCHA...');
     const recaptchaResult = await verifyRecaptcha(captchaToken || '');
     if (!recaptchaResult.success) {
       console.warn('reCAPTCHA verification failed:', recaptchaResult.error);
@@ -63,6 +68,7 @@ export default async function handler(
     }
 
     // Validate phone number presence
+    console.log('Validating phone number...');
     if (!phoneNumber) {
       return res.status(400).json({ error: 'Phone number is required' });
     }
@@ -178,9 +184,21 @@ export default async function handler(
 
   } catch (error: any) {
     console.error('Error initiating call:', error);
-    return res.status(500).json({
-      error: 'Internal server error',
-      message: error.message || 'Failed to initiate call',
-    });
+    console.error('Error stack:', error.stack);
+
+    // Ensure we always return valid JSON
+    try {
+      return res.status(500).json({
+        error: 'Internal server error',
+        message: error.message || 'Failed to initiate call',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      });
+    } catch (jsonError) {
+      // If even JSON response fails, return plain text
+      return res.status(500).send(JSON.stringify({
+        error: 'Internal server error',
+        message: 'An unexpected error occurred',
+      }));
+    }
   }
 }
