@@ -184,8 +184,8 @@ const Pricing: React.FC = () => {
     {
       name: "Starter",
       price: "149",
-      setup: "799",
-      setupAmount: 799,
+      setup: "599",
+      setupAmount: 599,
       calls: "100 calls per month",
       features: [
         "1 AI Voice Agent",
