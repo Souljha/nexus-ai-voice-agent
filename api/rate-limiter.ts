@@ -27,15 +27,15 @@ const BLACKLISTED_NUMBERS = new Set<string>([
   // Example: '+1234567890'
 ]);
 
-// Cleanup old entries periodically
-setInterval(() => {
+// Cleanup old entries on-demand (serverless functions don't support setInterval)
+function cleanupExpiredEntries() {
   const now = Date.now();
   for (const [key, entry] of rateLimitStore.entries()) {
     if (entry.resetTime < now && (!entry.blockedUntil || entry.blockedUntil < now)) {
       rateLimitStore.delete(key);
     }
   }
-}, RATE_LIMIT_CONFIG.cleanupIntervalMs);
+}
 
 export function isPhoneBlacklisted(phoneNumber: string): boolean {
   return BLACKLISTED_NUMBERS.has(phoneNumber);
@@ -50,6 +50,9 @@ export function checkRateLimit(
   identifier: string,
   maxCalls: number
 ): { allowed: boolean; retryAfter?: number; reason?: string } {
+  // Run cleanup on each check (serverless-friendly)
+  cleanupExpiredEntries();
+
   const now = Date.now();
   const entry = rateLimitStore.get(identifier);
 
