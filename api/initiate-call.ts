@@ -7,6 +7,49 @@ interface CallRequestBody {
   email?: string;
   message?: string;
   honeypot?: string; // Bot detection
+  recaptchaToken?: string; // reCAPTCHA v3 token
+  formStartTime?: number; // When form was rendered
+  userInteracted?: boolean; // Did user click/type before submit
+}
+
+// Verify reCAPTCHA token (serverless-safe)
+async function verifyRecaptchaToken(token: string): Promise<{ success: boolean; score?: number; error?: string }> {
+  const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+
+  if (!secretKey) {
+    console.warn('RECAPTCHA_SECRET_KEY not configured - allowing with warning');
+    return { success: true, score: 0.5 };
+  }
+
+  if (!token) {
+    console.warn('No reCAPTCHA token provided');
+    return { success: false, error: 'Security verification required' };
+  }
+
+  try {
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `secret=${secretKey}&response=${token}`,
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      return { success: false, error: 'Security verification failed' };
+    }
+
+    // reCAPTCHA v3 returns score 0.0-1.0 (1.0 = very likely human)
+    if (data.score < 0.6) {
+      console.warn(`Low reCAPTCHA score: ${data.score}`);
+      return { success: false, score: data.score, error: 'Suspicious activity detected' };
+    }
+
+    return { success: true, score: data.score };
+  } catch (error) {
+    console.error('reCAPTCHA verification error:', error);
+    return { success: false, error: 'Verification failed' };
+  }
 }
 
 // Simple in-memory rate limiting (serverless-safe)
@@ -58,16 +101,48 @@ export default async function handler(
   }
 
   try {
-    console.log('Initiating call request with basic security');
-    const { phoneNumber, firstName, lastName, email, message, honeypot } = req.body as CallRequestBody;
+    console.log('Initiating call request with enhanced security');
+    const { phoneNumber, firstName, lastName, email, message, honeypot, recaptchaToken, formStartTime, userInteracted } = req.body as CallRequestBody;
 
-    // Honeypot check
+    // 1. Honeypot check
     if (honeypot) {
       console.warn('Bot detected via honeypot');
       return res.status(200).json({ success: true, message: 'Call initiated successfully' });
     }
 
-    // Basic validation
+    // 2. reCAPTCHA verification (human detection)
+    const recaptchaResult = await verifyRecaptchaToken(recaptchaToken || '');
+    if (!recaptchaResult.success) {
+      console.warn('reCAPTCHA verification failed:', recaptchaResult.error);
+      return res.status(403).json({
+        error: 'Security verification failed. Please refresh and try again.',
+        details: recaptchaResult.error
+      });
+    }
+    console.log(`reCAPTCHA score: ${recaptchaResult.score}`);
+
+    // 3. Form timing check (bots submit too fast)
+    if (formStartTime) {
+      const formFillTime = Date.now() - formStartTime;
+      const minFillTime = 3000; // Minimum 3 seconds to fill form
+
+      if (formFillTime < minFillTime) {
+        console.warn(`Form submitted too fast: ${formFillTime}ms`);
+        return res.status(403).json({
+          error: 'Please take your time to fill out the form.'
+        });
+      }
+    }
+
+    // 4. User interaction check
+    if (userInteracted === false) {
+      console.warn('No user interaction detected before submit');
+      return res.status(403).json({
+        error: 'Please interact with the form before submitting.'
+      });
+    }
+
+    // 5. Basic validation
     if (!phoneNumber) {
       return res.status(400).json({ error: 'Phone number is required' });
     }

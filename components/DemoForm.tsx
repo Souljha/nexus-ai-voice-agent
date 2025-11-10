@@ -29,6 +29,8 @@ const DemoForm: React.FC = () => {
   const [honeypot, setHoneypot] = useState(''); // Bot detection field
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [formStartTime] = useState(Date.now()); // Track when form was loaded
+  const [userInteracted, setUserInteracted] = useState(false); // Track user interaction
 
   // Vapi integration for browser-based voice chat
   const { isConnected, callStatus, error: vapiError, startCall, endCall, isSpeaking, volumeLevel } = useVapi();
@@ -36,6 +38,11 @@ const DemoForm: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Mark that user has interacted with the form
+    if (!userInteracted) {
+      setUserInteracted(true);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -70,7 +77,9 @@ const DemoForm: React.FC = () => {
           email: formData.email,
           message: formData.message,
           honeypot: honeypot, // Include honeypot for bot detection
-          captchaToken: captchaToken, // Include reCAPTCHA token
+          recaptchaToken: captchaToken, // Include reCAPTCHA token (renamed from captchaToken)
+          formStartTime: formStartTime, // Include form start time for timing check
+          userInteracted: userInteracted, // Include user interaction flag
         }),
       });
 
