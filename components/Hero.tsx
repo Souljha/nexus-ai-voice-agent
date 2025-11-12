@@ -17,11 +17,35 @@ const Hero: React.FC = () => {
         <p className="text-xl md:text-2xl text-gray-300 font-medium mb-6">
           We turn missed customer calls into automated bookings, 24/7, using AI voice + smart websites.
         </p>
+
+        {/* Video Showcase */}
+        <div className="max-w-4xl mx-auto mb-12">
+          <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-blue-500/30 hover:border-blue-500/50 transition-all duration-300">
+            <video
+              className="w-full h-auto"
+              autoPlay
+              loop
+              playsInline
+              controls
+              preload="metadata"
+            >
+              <source src="/videos/demo-video.mp4" type="video/mp4" />
+              <source src="/videos/demo-video.webm" type="video/webm" />
+              Your browser does not support the video tag.
+            </video>
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900/80 to-transparent p-4 pointer-events-none">
+              <p className="text-white text-sm md:text-base font-medium">
+                Watch our AI Voice Agent in action
+              </p>
+            </div>
+          </div>
+        </div>
+
         <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight mb-4">
           Try Our AI Voice Agent — <span className="text-blue-400">Live Demo</span>
         </h1>
         <p className="max-w-3xl mx-auto text-lg md:text-xl text-gray-400 mb-8">
-          Enter your phone number and we’ll call you now. Say ‘book an appointment’ or ask a question.
+          Enter your phone number and we'll call you now. Say 'book an appointment' or ask a question.
         </p>
 
         <div className="max-w-2xl mx-auto">
