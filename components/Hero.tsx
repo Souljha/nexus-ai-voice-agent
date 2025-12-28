@@ -12,8 +12,16 @@ const ListItem: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 const Hero: React.FC = () => {
   return (
-    <section className="py-16 md:py-24">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <section className="relative py-16 md:py-24 overflow-hidden">
+      {/* Background Image with Overlay */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-60"
+        style={{ backgroundImage: 'url(/images/nexus%20ai%20voice%20agent%20bg.png)' }}
+      ></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0a192f]/50 via-slate-900/60 to-slate-900/80"></div>
+
+      {/* Content */}
+      <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <p className="text-xl md:text-2xl text-gray-300 font-medium mb-6">
           We turn missed customer calls into automated bookings, 24/7, using AI voice + smart websites.
         </p>
